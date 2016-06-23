@@ -56,7 +56,12 @@ void Brose_DotMatrix::fillScreen(uint16_t color) {
 		for (uint8_t reg = 0; reg < 16; reg++)
 			_imageBuffer[y][reg] = fillByte;
 }
-			
+
+void enable(boolean enableDisplay) {
+	_enabled = enableDisplay;
+	if (!_enabled)
+		digitalWrite(_enable, HIGH); //Disable output of registers
+}	
 
 void Brose_DotMatrix::drawPixel(int16_t x, int16_t y, uint16_t color) {
 	if (x < 0 || y < 0 || x >= width() || y >= height()) return;
@@ -71,15 +76,16 @@ void Brose_DotMatrix::drawPixel(int16_t x, int16_t y, uint16_t color) {
 }
 
 void Brose_DotMatrix::display(void) {
+	if (!_enabled) return; //Why work if there is nothing to work on?
 	for (int8_t reg = 15; reg >= 0; reg--) {
 		//reverse magic
 		shiftOut(_data, _clock, MSBFIRST, _imageBuffer[_currentRow][reg]);
 	}
-	digitalWrite(_enable, HIGH);
-	digitalWrite(_latch, HIGH); //shift the data to the pins
-	digitalWrite(_latch, LOW);
-	selectRow(_currentRow);
-	digitalWrite(_enable, LOW);
-	_currentRow++;    // increment row
-	_currentRow &= 7; // fall back to 0 if > 7
+	digitalWrite(_enable, HIGH); // disable the output of the registers for a second
+	digitalWrite(_latch, HIGH);  // so we can shift the data to the pins
+	digitalWrite(_latch, LOW);   // without anyone seeing the refresh
+	selectRow(_currentRow);      // of course we need to select the new row
+	digitalWrite(_enable, LOW);  // before turning it on again
+	_currentRow++;               // we can now increment row for the next run
+	_currentRow &= 7;            // but fall back to row 0 if we exceed the last row
 }
