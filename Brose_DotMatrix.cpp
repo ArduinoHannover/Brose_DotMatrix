@@ -29,6 +29,7 @@ void Brose_DotMatrix::begin() {
 	pinMode(_addr2, OUTPUT);
 	digitalWrite(_latch, LOW);
 	digitalWrite(_enable, HIGH);
+	#ifndef ESP8266
 	/*
 	 * You may try different values here.
 	 * Higher may flicker
@@ -37,6 +38,7 @@ void Brose_DotMatrix::begin() {
 	 */
 	Timer1.initialize(3000);
 	Timer1.attachInterrupt(displayMatrix);
+	#endif
 	fillScreen(1);
 	delay(100);
 	fillScreen(0);
@@ -57,7 +59,7 @@ void Brose_DotMatrix::fillScreen(uint16_t color) {
 			_imageBuffer[y][reg] = fillByte;
 }
 
-void enable(boolean enableDisplay) {
+void Brose_DotMatrix::enable(boolean enableDisplay) {
 	_enabled = enableDisplay;
 	if (!_enabled)
 		digitalWrite(_enable, HIGH); //Disable output of registers

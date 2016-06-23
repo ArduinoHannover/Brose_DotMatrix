@@ -2,7 +2,9 @@
 #define BROSE_DOTMATIX_H
 
 #include <Adafruit_GFX.h>
+#ifndef ESP8266
 #include "TimerOne.h"
+#endif
 
 void displayMatrix();
 
