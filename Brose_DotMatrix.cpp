@@ -8,7 +8,7 @@ Brose_DotMatrix::Brose_DotMatrix(
 	uint8_t addr0,
 	uint8_t addr1,
 	uint8_t addr2) :
-	Adafruit_GFX(120, 8),
+	Adafruit_GFX(121, 8), // dirty hack, see .h-file
 	_data(data),
 	_clock(clock),
 	_latch(latch),
@@ -63,7 +63,23 @@ void Brose_DotMatrix::enable(boolean enableDisplay) {
 	_enabled = enableDisplay;
 	if (!_enabled)
 		digitalWrite(_enable, HIGH); //Disable output of registers
+	else if (_dim != PWMRANGE)
+		analogWrite(_enable, PWMRANGE - _dim);
+	else
+		digitalWrite(_enable, LOW);
+}
+
+boolean Brose_DotMatrix::enabled() {
+	return _enabled;
 }	
+
+void Brose_DotMatrix::dim(uint8_t dimmed) {
+	uint8_t factor = PWMRANGE / 255;
+	_dim = dimmed;
+	_dim *= factor;
+	_dim += factor-1;
+	analogWrite(_enable, PWMRANGE - _dim);
+}
 
 void Brose_DotMatrix::drawPixel(int16_t x, int16_t y, uint16_t color) {
 	if (x < 0 || y < 0 || x >= width() || y >= height()) return;
@@ -87,7 +103,8 @@ void Brose_DotMatrix::display(void) {
 	digitalWrite(_latch, HIGH);  // so we can shift the data to the pins
 	digitalWrite(_latch, LOW);   // without anyone seeing the refresh
 	selectRow(_currentRow);      // of course we need to select the new row
-	digitalWrite(_enable, LOW);  // before turning it on again
+	enable(true);                // before turning it on again
 	_currentRow++;               // we can now increment row for the next run
 	_currentRow &= 7;            // but fall back to row 0 if we exceed the last row
+	delay(0);                    // equals yield() to give cpu time to maintain wifi on ESP8266
 }
